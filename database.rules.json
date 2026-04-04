@@ -1,0 +1,56 @@
+{
+  "rules": {
+
+    // ── Public portfolio data (anyone can read, only admin can write) ─────────
+    "profile":      { ".read": true, ".write": "auth != null && auth.token.email === 'mo3azbe4er@gmail.com'" },
+    "skills":       { ".read": true, ".write": "auth != null && auth.token.email === 'mo3azbe4er@gmail.com'" },
+    "projects":     { ".read": true, ".write": "auth != null && auth.token.email === 'mo3azbe4er@gmail.com'" },
+    "experience":   { ".read": true, ".write": "auth != null && auth.token.email === 'mo3azbe4er@gmail.com'" },
+    "education":    { ".read": true, ".write": "auth != null && auth.token.email === 'mo3azbe4er@gmail.com'" },
+    "certificates": { ".read": true, ".write": "auth != null && auth.token.email === 'mo3azbe4er@gmail.com'" },
+    "achievements": { ".read": true, ".write": "auth != null && auth.token.email === 'mo3azbe4er@gmail.com'" },
+    "settings":     { ".read": true, ".write": "auth != null && auth.token.email === 'mo3azbe4er@gmail.com'" },
+
+    // ── Profile view counter (public read + increment-only write) ────────────
+    "profileViews": {
+      ".read": true,
+      ".write": true,
+      ".validate": "newData.isNumber() && (!data.exists() || newData.val() == data.val() + 1)"
+    },
+
+    // ── Messages (public write to create, admin-only read/delete) ────────────
+    "messages": {
+      ".read": "auth != null && auth.token.email === 'mo3azbe4er@gmail.com'",
+
+      "$messageId": {
+        ".write": "!data.exists() || (auth != null && auth.token.email === 'mo3azbe4er@gmail.com')",
+
+        "name":      { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100" },
+        "email":     { ".validate": "newData.isString() && newData.val().matches(/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/)" },
+        "subject":   { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
+        "message":   { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 5000" },
+        "timestamp": { ".validate": "newData.isNumber() || newData.isString()" },
+        "read":      { ".validate": "newData.isBoolean()" },
+        "priority":  { ".validate": "newData.isBoolean()" },
+
+        "$other": { ".validate": false }
+      }
+    },
+
+    // ── Admin FCM tokens (admin-only read & write, NEVER public) ────────────
+    // Cloud Functions bypass these rules (server-side SDK), so the function
+    // can always read/write tokens regardless of auth.
+    "admin_tokens": {
+      ".read":  "auth != null && auth.token.email === 'mo3azbe4er@gmail.com'",
+      ".write": "auth != null && auth.token.email === 'mo3azbe4er@gmail.com'",
+
+      "$tokenId": {
+        "token":     { ".validate": "newData.isString() && newData.val().length > 0" },
+        "platform":  { ".validate": "newData.isString()" },
+        "updatedAt": { ".validate": "newData.isString()" },
+
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}
