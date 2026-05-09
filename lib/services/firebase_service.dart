@@ -1,4 +1,8 @@
+import 'dart:typed_data';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../models/app_models.dart';
@@ -133,4 +137,76 @@ class FirebaseService {
   Future<void> addAchievement(Achievement a) async => _db.child('achievements/${a.id}').set(a.toMap());
   Future<void> updateAchievement(Achievement a) async => _db.child('achievements/${a.id}').update(a.toMap());
   Future<void> deleteAchievement(String id) async => _db.child('achievements/$id').remove();
+
+  // --- Firebase Storage Uploads ---
+
+  /// Core upload: uses putData(bytes) to avoid Scoped Storage issues on Android.
+  Future<String> _uploadBytes(
+    Uint8List bytes,
+    String storagePath,
+    SettableMetadata metadata, {
+    void Function(double progress)? onProgress,
+  }) async {
+    final ref = FirebaseStorage.instance.ref(storagePath);
+    final task = ref.putData(bytes, metadata);
+
+    if (onProgress != null) {
+      task.snapshotEvents.listen((snap) {
+        if (snap.totalBytes > 0) {
+          onProgress(snap.bytesTransferred / snap.totalBytes);
+        }
+      });
+    }
+
+    await task;
+    return await ref.getDownloadURL();
+  }
+
+  /// Uploads the profile image (XFile from image_picker) and saves URL to DB.
+  Future<String> uploadProfileImage(
+    XFile imageFile, {
+    void Function(double)? onProgress,
+  }) async {
+    final bytes = await imageFile.readAsBytes();
+    final url = await _uploadBytes(
+      bytes,
+      'profile/profile_image.jpg',
+      SettableMetadata(contentType: 'image/jpeg'),
+      onProgress: onProgress,
+    );
+    await _db.child('profile/coverImage').set(url);
+    return url;
+  }
+
+  /// Uploads the CV/Resume (PlatformFile from file_picker) and saves URL to DB.
+  Future<String> uploadResumePDF(
+    PlatformFile platformFile, {
+    void Function(double)? onProgress,
+  }) async {
+    final bytes = platformFile.bytes ?? await platformFile.xFile.readAsBytes();
+    final url = await _uploadBytes(
+      bytes,
+      'profile/resume.pdf',
+      SettableMetadata(contentType: 'application/pdf'),
+      onProgress: onProgress,
+    );
+    await _db.child('profile/resume').set(url);
+    return url;
+  }
+
+  /// Uploads a Certificate PDF and returns the URL.
+  Future<String> uploadCertificatePDF(
+    PlatformFile platformFile,
+    String certId, {
+    void Function(double)? onProgress,
+  }) async {
+    final bytes = platformFile.bytes ?? await platformFile.xFile.readAsBytes();
+    final url = await _uploadBytes(
+      bytes,
+      'certificates/$certId.pdf',
+      SettableMetadata(contentType: 'application/pdf'),
+      onProgress: onProgress,
+    );
+    return url;
+  }
 }
