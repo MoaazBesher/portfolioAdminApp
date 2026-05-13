@@ -13,25 +13,25 @@ class SkillsTab extends StatefulWidget {
 
 class _SkillsTabState extends State<SkillsTab> {
   late Map<String, List<Skill>> skills;
+  late DataProvider _provider;
 
   @override
   void initState() {
     super.initState();
-    final provider = context.read<DataProvider>();
-    skills = _copySkills(provider.skills);
-    provider.addListener(_onProviderChange);
+    _provider = context.read<DataProvider>();
+    skills = _copySkills(_provider.skills);
+    _provider.addListener(_onProviderChange);
   }
 
   @override
   void dispose() {
-    context.read<DataProvider>().removeListener(_onProviderChange);
+    _provider.removeListener(_onProviderChange);
     super.dispose();
   }
 
   void _onProviderChange() {
-    final provider = context.read<DataProvider>();
     setState(() {
-      skills = _copySkills(provider.skills);
+      skills = _copySkills(_provider.skills);
     });
   }
 
