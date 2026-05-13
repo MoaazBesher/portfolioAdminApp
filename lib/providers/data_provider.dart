@@ -17,7 +17,7 @@ class DataProvider with ChangeNotifier {
   List<Experience> experience = [];
   List<Achievement> achievements = [];
   List<AppMessage> messages = [];
-  Map<String, Map<String, int>> skills = {'technical': {}, 'soft': {}};
+  Map<String, List<Skill>> skills = {'technical': [], 'soft': []};
 
   int get unreadMessagesCount => messages.where((m) => !m.read).length;
 
@@ -97,7 +97,7 @@ class DataProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateSkills(Map<String, Map<String, int>> newSkills) async {
+  Future<void> updateSkills(Map<String, List<Skill>> newSkills) async {
     await _service.updateSkills(newSkills);
     skills = newSkills;
     notifyListeners();

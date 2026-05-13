@@ -79,16 +79,25 @@ class FirebaseService {
   Future<List<Achievement>> getAchievements() async => _mapToList(await _fetchData('achievements'), Achievement.fromMap);
   Future<List<AppMessage>> getMessages() async => _mapToList(await _fetchData('messages'), AppMessage.fromMap);
 
-  Future<Map<String, Map<String, int>>> getSkills() async {
+  Future<Map<String, List<Skill>>> getSkills() async {
     final data = await _fetchData('skills');
-    if (data == null) return {'technical': {}, 'soft': {}};
-    Map<String, Map<String, int>> result = {'technical': {}, 'soft': {}};
-    
-    if (data['technical'] != null) {
-      (data['technical'] as Map).forEach((k, v) => result['technical']![k.toString()] = int.parse(v.toString()));
-    }
-    if (data['soft'] != null) {
-      (data['soft'] as Map).forEach((k, v) => result['soft']![k.toString()] = int.parse(v.toString()));
+    if (data == null) return {'technical': [], 'soft': []};
+    Map<String, List<Skill>> result = {'technical': [], 'soft': []};
+
+    for (final cat in ['technical', 'soft']) {
+      final raw = data[cat];
+      if (raw == null) continue;
+
+      if (raw is List) {
+        result[cat] = raw.map((e) => Skill.fromMap(e as Map<dynamic, dynamic>)).toList();
+      } else if (raw is Map) {
+        // backward compatibility with old map format
+        final list = <Skill>[];
+        raw.forEach((k, v) {
+          list.add(Skill(name: k.toString(), value: int.tryParse(v.toString()) ?? 0));
+        });
+        result[cat] = list;
+      }
     }
     return result;
   }
@@ -116,7 +125,10 @@ class FirebaseService {
   
   Future<void> updateSettings(AppSettings settings) async => await _db.child('settings').set(settings.toMap());
   
-  Future<void> updateSkills(Map<String, Map<String, int>> skills) async => await _db.child('skills').set(skills);
+  Future<void> updateSkills(Map<String, List<Skill>> skills) async {
+    final data = skills.map((cat, list) => MapEntry(cat, list.map((s) => s.toMap()).toList()));
+    await _db.child('skills').set(data);
+  }
 
   Future<void> addProject(Project p) async => _db.child('projects/${p.id}').set(p.toMap());
   Future<void> updateProject(Project p) async => _db.child('projects/${p.id}').update(p.toMap());

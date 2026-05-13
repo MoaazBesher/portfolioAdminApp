@@ -144,6 +144,20 @@ class AppMessage {
   };
 }
 
+class Skill {
+  final String name;
+  final int value;
+
+  Skill({this.name = '', this.value = 0});
+
+  factory Skill.fromMap(Map<dynamic, dynamic> map) => Skill(
+    name: map['name'] ?? '',
+    value: int.tryParse(map['value']?.toString() ?? '') ?? 0,
+  );
+
+  Map<String, dynamic> toMap() => {'name': name, 'value': value};
+}
+
 class AppSettings {
   final String siteTitle, defaultTheme, theme, profileViewsUrl;
   final int itemsPerPage;

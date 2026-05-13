@@ -20,7 +20,42 @@ class ProjectsTab extends StatelessWidget {
           itemBuilder: (ctx, project) => Card(
             margin: const EdgeInsets.only(bottom: 12),
             child: ListTile(
-              title: Text(project.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+              leading: IconButton(
+                icon: Icon(
+                  project.featured ? Icons.star : Icons.star_border,
+                  color: project.featured ? Colors.amber : Colors.grey,
+                ),
+                onPressed: () {
+                  final updated = Project(
+                    id: project.id,
+                    title: project.title,
+                    description: project.description,
+                    category: project.category,
+                    link: project.link,
+                    date: project.date,
+                    featured: !project.featured,
+                    tech: project.tech,
+                  );
+                  provider.saveProject(updated);
+                },
+                tooltip: project.featured ? 'Unmark featured' : 'Mark as featured',
+              ),
+              title: Row(
+                children: [
+                  Expanded(
+                    child: Text(project.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  if (project.featured)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withAlpha(30),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text('FEATURED', style: TextStyle(fontSize: 9, color: Colors.amber, fontWeight: FontWeight.bold)),
+                    ),
+                ],
+              ),
               subtitle: Text(project.category.toUpperCase(), style: TextStyle(color: Theme.of(context).primaryColor, fontSize: 12)),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -85,11 +120,6 @@ class ProjectsTab extends StatelessWidget {
                 CustomTextField(label: 'Link', initialValue: link, onSaved: (v) => link = v!),
                 CustomTextField(label: 'Technologies (comma separated)', initialValue: techString, onSaved: (v) => techString = v!),
                 CustomTextField(label: 'Description', initialValue: description, maxLines: 4, isRequired: true, onSaved: (v) => description = v!),
-                SwitchListTile(
-                  title: const Text('Featured Project'),
-                  value: featured,
-                  onChanged: (v) => featured = v,
-                ),
                 const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
